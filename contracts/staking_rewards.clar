@@ -14,7 +14,6 @@
 (define-constant ERR_NO_STAKE (err u1005))                 	;; Error: No staked amount found for this user.
 (define-constant ERR_ALREADY_CLAIMED (err u1006))          	;; Error: Rewards have already been claimed.
 
-
 ;; State Variables
 (define-data-var contract-owner principal tx-sender)         	;; The principal address of the contract owner.
 (define-data-var rewards-per-block uint u100)               	;; Amount of rewards distributed per block.
@@ -33,4 +32,44 @@
 )
 
 (define-map pending-rewards principal uint)                  	;; Map to track rewards pending for each user. 
+
+;; Read-Only Functions
+(define-read-only (get-staker-details (staker principal))
+  (default-to 
+      { staked-amount: u0, reward-debt: u0, last-claim-block: u0 }
+      (map-get? staker-details staker)
+  )
+)
+
+(define-read-only (calculate-pending-reward (staker principal))
+  (let (
+      (staker-info (get-staker-details staker))
+      (current-rewards-per-share (calculate-rewards-per-share))
+  )
+  (+ 
+      (default-to u0 (map-get? pending-rewards staker)) 
+      (/
+          (* (get staked-amount staker-info) 
+            (- current-rewards-per-share (get reward-debt staker-info))) 
+          u1000000
+      )
+  ))
+)
+
+(define-read-only (calculate-rewards-per-share)
+  (let (
+      (blocks-passed (- block-height (var-get last-update-block)))  
+      (total-staked (var-get total-tokens-staked))                	
+  )
+  (if (is-eq total-staked u0)
+      (var-get total-rewards-accumulated)                       	
+      (+
+          (var-get total-rewards-accumulated)
+          (/
+              (* (* blocks-passed (var-get rewards-per-block)) u1000000)
+              total-staked
+          )
+      )
+  ))
+)
 
