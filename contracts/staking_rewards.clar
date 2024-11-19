@@ -168,3 +168,13 @@
     (map-set pending-rewards staker u0)                              ;; Reset pending rewards to zero.
     (ok true))
 )
+
+;; Private Functions
+(define-private (update-rewards)
+    (let (
+        (current-rewards-per-share (calculate-rewards-per-share))    
+    )
+    (var-set total-rewards-accumulated current-rewards-per-share)     ;; Update accumulated rewards.
+    (var-set last-update-block block-height))                        ;; Update the last block height.
+)
+
