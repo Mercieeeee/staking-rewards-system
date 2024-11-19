@@ -15,6 +15,8 @@ This project implements a **Staking Rewards Contract** in **Clarity 2.0** for a 
 4. [Contract Functions](#contract-functions)
    - [Read-Only Functions](#read-only-functions)
    - [Public Functions](#public-functions)
+   - [Private Functions](#private-functions)
+   - [Admin Functions](#admin-functions)
 5. [Usage](#usage)
 6. [Development Notes](#development-notes)
 7. [License](#license)
@@ -37,6 +39,8 @@ The **Staking Rewards Contract** enables users to:
 - **Claim Rewards**: Users can claim rewards at any time.
 - **Unstaking**: Users can unstake tokens while claiming their accrued rewards.
 - **Error Handling**: Common errors are predefined for better debugging and user feedback.
+- **Reward Rate Adjustments**: Admins can dynamically update the rewards rate for flexibility.
+- **Emergency Withdrawals**: Admins can recover all staked and reward tokens in case of emergencies.
 
 ---
 
@@ -91,6 +95,25 @@ Staker data is managed using the `staker-details` map:
 2. **`unstake-tokens`**: Lets users unstake tokens and claim their pending rewards.
 3. **`claim-rewards`**: Enables users to claim their accrued rewards without unstaking.
 
+### Private Functions
+
+1. **`update-rewards`**:  
+   - Updates the `total-rewards-accumulated` with the current rewards per share.
+   - Updates `last-update-block` to the current block height.  
+   - Ensures reward calculations remain accurate over time.
+
+### Admin Functions
+
+1. **`set-rewards-rate`**:  
+   - Allows the contract owner to update the rewards rate (`rewards-per-block`).  
+   - Ensures the new rate is greater than zero for validity.  
+   - Throws an error (`ERR_NOT_AUTHORIZED`) if the caller is not the contract owner or (`ERR_INVALID_AMOUNT`) for invalid inputs.
+
+2. **`emergency-withdraw`**:  
+   - Allows the contract owner to withdraw all tokens (`staked-token` and `reward-token`) in the contract.  
+   - Transfers tokens back to the owner's address.  
+   - Ensures only the owner can invoke this function, throwing `ERR_NOT_AUTHORIZED` for unauthorized access.
+
 ---
 
 ## Usage
@@ -132,6 +155,12 @@ Rewards are calculated based on:
 ### Updating Rewards
 
 The `update-rewards` logic is embedded in staking and claiming functions to ensure accurate reward distribution.
+
+### Additional Admin and Maintenance Functions
+
+- **Reward Updates**: The `update-rewards` function ensures consistent reward distribution by syncing accumulated rewards and block height.  
+- **Safety Measures**: The `emergency-withdraw` function acts as a failsafe for recovering tokens.  
+- **Access Control**: Functions like `set-rewards-rate` and `emergency-withdraw` include strict ownership validation to prevent unauthorized actions.
 
 ---
 
