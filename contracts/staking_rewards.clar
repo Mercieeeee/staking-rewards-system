@@ -178,3 +178,24 @@
     (var-set last-update-block block-height))                        ;; Update the last block height.
 )
 
+;; Admin Functions
+(define-public (set-rewards-rate (new-rate uint))
+  (begin
+      (asserts! (is-eq tx-sender (var-get contract-owner)) ERR_NOT_AUTHORIZED)  ;; Ensure only the owner can set this.
+      (asserts! (> new-rate u0) ERR_INVALID_AMOUNT)                        	;; Validate new rewards rate.
+      (var-set rewards-per-block new-rate)                                	;; Set the new rewards per block.
+      (ok true))
+)
+
+(define-public (emergency-withdraw)
+  (begin
+      (asserts! (is-eq tx-sender (var-get contract-owner)) ERR_NOT_AUTHORIZED)  ;; Only the owner can withdraw.
+      (let (
+          (stake-balance (ft-get-balance staked-token (as-contract tx-sender)))	;; Get stake token balance.
+          (reward-balance (ft-get-balance reward-token (as-contract tx-sender)))   ;; Get reward token balance.
+      )
+      ;; Transfer all stake and reward tokens back to the owner.
+      (try! (as-contract (ft-transfer? staked-token stake-balance (as-contract tx-sender) (var-get contract-owner))))
+      (try! (as-contract (ft-transfer? reward-token reward-balance (as-contract tx-sender) (var-get contract-owner))))
+      (ok true)))
+)
