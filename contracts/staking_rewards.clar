@@ -56,20 +56,3 @@
   ))
 )
 
-(define-read-only (calculate-rewards-per-share)
-  (let (
-      (blocks-passed (- block-height (var-get last-update-block)))  
-      (total-staked (var-get total-tokens-staked))                	
-  )
-  (if (is-eq total-staked u0)
-      (var-get total-rewards-accumulated)                       	
-      (+
-          (var-get total-rewards-accumulated)
-          (/
-              (* (* blocks-passed (var-get rewards-per-block)) u1000000)
-              total-staked
-          )
-      )
-  ))
-)
-
